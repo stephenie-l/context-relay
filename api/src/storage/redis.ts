@@ -27,10 +27,19 @@ export interface StoredPacket {
 }
 
 const sessionKey = (sessionId: string) => `session:${sessionId}:packets`;
+const packetKey = (packetId: string) => `packet:${packetId}`;
 
 export async function savePacket(packet: StoredPacket): Promise<void> {
-  const key = sessionKey(packet.session_id);
-  await redis.lpush(key, JSON.stringify(packet));
+  await Promise.all([
+    redis.set(packetKey(packet.packet_id), JSON.stringify(packet)),
+    redis.lpush(sessionKey(packet.session_id), JSON.stringify(packet)),
+  ]);
+}
+
+export async function getPacketById(packetId: string): Promise<StoredPacket | null> {
+  const raw = await redis.get(packetKey(packetId));
+  if (!raw) return null;
+  return typeof raw === "string" ? (JSON.parse(raw) as StoredPacket) : (raw as StoredPacket);
 }
 
 export async function getPackets(sessionId: string): Promise<StoredPacket[]> {
