@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Context Relay",
+  "version": "1.0.0",
+  "description": "Distill and hand off AI conversations across platforms",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://claude.ai/*",
+    "https://chat.openai.com/*",
+    "https://context-relay-production.up.railway.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["content/capture.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Context Relay"
+  }
+}
