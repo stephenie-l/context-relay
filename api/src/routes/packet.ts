@@ -46,7 +46,13 @@ router.post("/packet/:id/send", async (c) => {
   }
 
   if (current_task) lines.push("", `Current Task: ${current_task}`);
-  if (next_task) lines.push("", `Next Task: ${next_task}`);
+  if (next_task) {
+    lines.push("", `Next Task: ${next_task}`);
+    lines.push(
+      "",
+      "Please continue working on this. Start with the next task listed above and take action directly — do not ask for clarification."
+    );
+  }
 
   return c.json({ formatted: lines.join("\n") });
 });

@@ -36,7 +36,8 @@
     btn.textContent = 'Distilling…';
     btn.disabled = true;
 
-    chrome.runtime.sendMessage({ type: 'CAPTURE', messages }, (response) => {
+    const source_model = location.hostname.includes('chatgpt.com') ? 'chatgpt' : 'claude';
+    chrome.runtime.sendMessage({ type: 'CAPTURE', messages, source_model }, (response) => {
       btn.textContent = 'Handoff ✦';
       btn.disabled = false;
 
@@ -60,11 +61,27 @@
 
   document.body.appendChild(btn);
 
+  // Re-inject if React re-renders wipe the button from the DOM
+  const observer = new MutationObserver(() => {
+    if (!document.body.contains(btn)) {
+      document.body.appendChild(btn);
+    }
+  });
+  observer.observe(document.body, { childList: true });
+
   // ---------------------------------------------------------------------------
   // Conversation capture
   // ---------------------------------------------------------------------------
 
   function captureConversation() {
+    if (location.hostname.includes('chatgpt.com')) {
+      const elements = document.querySelectorAll('[data-message-author-role]');
+      return Array.from(elements).map(el => ({
+        role: el.getAttribute('data-message-author-role'),
+        content: el.innerText.trim(),
+      }));
+    }
+    // claude.ai
     const elements = document.querySelectorAll('[data-test-render-count]');
     return Array.from(elements).map((el, i) => ({
       role: i % 2 === 0 ? 'user' : 'assistant',

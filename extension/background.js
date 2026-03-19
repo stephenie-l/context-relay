@@ -2,7 +2,7 @@ const API_BASE = 'https://context-relay-production.up.railway.app';
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'CAPTURE') {
-    handleCapture(message.messages).then(sendResponse);
+    handleCapture(message.messages, message.source_model).then(sendResponse);
     return true; // keep channel open for async response
   }
 
@@ -16,12 +16,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 // Distill conversation → packet
 // ---------------------------------------------------------------------------
 
-async function handleCapture(messages) {
+async function handleCapture(messages, source_model) {
   try {
     const res = await fetch(`${API_BASE}/distill`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, session_id: 'sess_' + Date.now(), source_model: 'claude' }),
+      body: JSON.stringify({ messages, session_id: 'sess_' + Date.now(), source_model: source_model || 'claude' }),
     });
 
     if (!res.ok) {
@@ -64,7 +64,7 @@ async function handleSend(packetId, destination) {
       await waitForTabLoad(tab.id);
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        func: injectPacket,
+        func: destination === 'claude' ? injectPacketClaude : injectPacketChatGPT,
         args: [data.formatted],
       });
     }
@@ -93,7 +93,7 @@ function waitForTabLoad(tabId) {
 }
 
 // Injected into the destination tab — must be self-contained (no closures over outer scope)
-function injectPacket(text) {
+function injectPacketChatGPT(text) {
   function waitFor(selector, timeout) {
     timeout = timeout || 15000;
     return new Promise(function (resolve, reject) {
@@ -102,6 +102,20 @@ function injectPacket(text) {
         var el = document.querySelector(selector);
         if (el) { resolve(el); return; }
         if (Date.now() - start > timeout) { reject(new Error('Timeout waiting for: ' + selector)); return; }
+        setTimeout(check, 300);
+      }
+      check();
+    });
+  }
+
+  function waitForEnabled(selector, timeout) {
+    timeout = timeout || 15000;
+    return new Promise(function (resolve, reject) {
+      var start = Date.now();
+      function check() {
+        var el = document.querySelector(selector);
+        if (el && !el.disabled) { resolve(el); return; }
+        if (Date.now() - start > timeout) { reject(new Error('Timeout waiting for enabled: ' + selector)); return; }
         setTimeout(check, 300);
       }
       check();
@@ -119,7 +133,41 @@ function injectPacket(text) {
         textarea.innerText = text;
         textarea.dispatchEvent(new InputEvent('input', { bubbles: true }));
       }
-      return waitFor('button[data-testid="send-button"]');
+      return waitForEnabled('button[data-testid="send-button"]');
+    })
+    .then(function (btn) {
+      btn.click();
+    })
+    .catch(function (err) {
+      console.error('[Context Relay] inject failed:', err.message);
+    });
+}
+
+function injectPacketClaude(text) {
+  function waitFor(selector, timeout) {
+    timeout = timeout || 15000;
+    return new Promise(function (resolve, reject) {
+      var start = Date.now();
+      function check() {
+        var el = document.querySelector(selector);
+        if (el) { resolve(el); return; }
+        if (Date.now() - start > timeout) { reject(new Error('Timeout waiting for: ' + selector)); return; }
+        setTimeout(check, 300);
+      }
+      check();
+    });
+  }
+
+  waitFor('div[contenteditable="true"]')
+    .then(function (editor) {
+      editor.focus();
+      document.execCommand('selectAll', false, null);
+      document.execCommand('insertText', false, text);
+      if (!editor.innerText.trim()) {
+        editor.innerText = text;
+        editor.dispatchEvent(new InputEvent('input', { bubbles: true }));
+      }
+      return waitFor('button[aria-label="Send message"]');
     })
     .then(function (btn) {
       setTimeout(function () { btn.click(); }, 500);
