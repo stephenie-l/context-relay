@@ -222,7 +222,6 @@
           sendBtn.disabled = false;
           sendBtn.textContent = 'Send';
           if (res?.error) { alert(`Send failed: ${res.error}`); return; }
-          if (res?.url) { window.open(res.url, '_blank'); }
           root.remove();
         }
       );
