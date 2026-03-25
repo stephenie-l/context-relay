@@ -1,14 +1,11 @@
 # Context Relay
 > A model-agnostic context preservation layer for AI workflows.
 > 
-
-
 Context Relay is a Chrome extension paired with a lightweight distillation API that packages the meaningful state of any AI conversation and hands it off seamlessly to any other model.
 
 [insert demo gif here]
 
-
-
+> 
 ## Why this exists
 
 AI models have no memory across sessions **or across providers**. Every time you start a new conversation, switch between models (e.g., Claude ↔ ChatGPT), or hit a context window limit, you lose the accumulated reasoning, decisions, and state from prior exchanges. This isn’t just annoying — it breaks your cognitive flow.
@@ -31,7 +28,7 @@ Context Relay removes that interruption.
     
     Long sessions hit token limits and force resets. Across sessions, there’s no structured, portable “source of truth” for your work.
 
-    
+>  
 
 ## How It Works
 
@@ -51,7 +48,7 @@ Chrome Extension  →  Distillation API  →  Destination Model
 
 **Supported destinations:** Claude, ChatGPT (more coming soon)
 
-
+> 
 
 ## Architecture & Tech Stack
 
@@ -79,7 +76,7 @@ Chrome Extension  →  Distillation API  →  Destination Model
 - JWT-based API keys
 - Zod for schema validation
 
-
+> 
 
 ## Getting Started
 
@@ -150,7 +147,7 @@ npm run dev
     
     `api/src/routes/`
     
-
+> 
 
 ## Built by
 
