@@ -44,9 +44,9 @@ Chrome Extension  →  Distillation API  →  Destination Model
                       structuring)          or others)
 ```
 
-**Supported sources:** Claude, ChatGPT (more coming soon)
+**Supported sources:** Claude, ChatGPT, Gemini (more coming soon)
 
-**Supported destinations:** Claude, ChatGPT (more coming soon)
+**Supported destinations:** Claude, ChatGPT, Gemini (more coming soon)
 
 > 
 
@@ -84,7 +84,10 @@ Context Relay is open source under the MIT License. You can run it locally as yo
 
 > **Status:** Early prototype. Core workflow (capture → distill → relay) is functional. Refinements ongoing.
 
-**Planned features:** Multi-destination sync (send to multiple models at once); more source platforms (Gemini, etc.); and improved packet customization.
+> Currently, the user must be logged in to each AI platform in their browser before using Context Relay. The extension supports web versions only (claude.ai, chatgpt.com, gemini.google.com) — desktop apps are not supported.
+>
+
+**Planned features:** Multi-destination sync (send to multiple models at once); more source platforms (Grok, Deepseek, etc.); and improved packet customization.
 > 
 
 ### Prerequisites
