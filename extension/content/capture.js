@@ -36,7 +36,7 @@
     btn.textContent = 'Distilling…';
     btn.disabled = true;
 
-    const source_model = location.hostname.includes('chatgpt.com') ? 'chatgpt' : 'claude';
+    const source_model = detectSourceModel();
     chrome.runtime.sendMessage({ type: 'CAPTURE', messages, source_model }, (response) => {
       btn.textContent = 'Handoff ✦';
       btn.disabled = false;
@@ -81,12 +81,51 @@
         content: el.innerText.trim(),
       }));
     }
+    if (location.hostname.includes('gemini.google.com')) {
+      const rawTurns = Array.from(document.querySelectorAll([
+        'user-query',
+        'model-response',
+        '[data-response-role="user"]',
+        '[data-response-role="model"]',
+        '[data-test-id="user-message"]',
+        '[data-test-id="model-response"]',
+        '.user-query-bubble-with-background',
+        '.model-response-text',
+      ].join(', ')));
+
+      const seen = new Set();
+      const messages = [];
+      rawTurns.forEach((el) => {
+        const text = (el.innerText || '').trim();
+        if (!text || seen.has(text)) return;
+        seen.add(text);
+
+        const isUser =
+          el.tagName.toLowerCase() === 'user-query' ||
+          el.getAttribute('data-response-role') === 'user' ||
+          el.getAttribute('data-test-id') === 'user-message' ||
+          el.classList.contains('user-query-bubble-with-background');
+
+        messages.push({
+          role: isUser ? 'user' : 'assistant',
+          content: text,
+        });
+      });
+
+      return messages;
+    }
     // claude.ai
     const elements = document.querySelectorAll('[data-test-render-count]');
     return Array.from(elements).map((el, i) => ({
       role: i % 2 === 0 ? 'user' : 'assistant',
       content: el.innerText.trim(),
     }));
+  }
+
+  function detectSourceModel() {
+    if (location.hostname.includes('chatgpt.com')) return 'chatgpt';
+    if (location.hostname.includes('gemini.google.com')) return 'gemini';
+    return 'claude';
   }
 
   // ---------------------------------------------------------------------------
@@ -135,9 +174,36 @@
         margin-top: 24px; padding-top: 20px;
         border-top: 1px solid #eee;
       }
+      .cr-select-wrap {
+        position: relative;
+        flex: 1;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fff;
+      }
+      .cr-select-wrap::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 12px;
+        width: 10px;
+        height: 6px;
+        transform: translateY(-50%);
+        pointer-events: none;
+        background-repeat: no-repeat;
+        background-size: 10px 6px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath fill='%23666' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+      }
       #cr-destination {
-        flex: 1; padding: 8px 12px; border-radius: 6px;
-        border: 1px solid #ddd; font-size: 14px; background: #fff;
+        width: 100%;
+        padding: 8px 32px 8px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        background: transparent;
+        color: #111;
+        -webkit-appearance: none;
+        appearance: none;
       }
       #cr-send {
         padding: 9px 22px; border-radius: 6px; border: none;
@@ -218,7 +284,8 @@
     select.id = 'cr-destination';
     [
       { value: 'chatgpt', label: 'ChatGPT' },
-      { value: 'claude', label: 'Claude (new chat)' },
+      { value: 'claude', label: 'Claude' },
+      { value: 'gemini', label: 'Gemini' },
     ].forEach(({ value, label }) => {
       const opt = document.createElement('option');
       opt.value = value;
@@ -244,7 +311,10 @@
       );
     });
 
-    actions.appendChild(select);
+    const selectWrap = document.createElement('div');
+    selectWrap.className = 'cr-select-wrap';
+    selectWrap.appendChild(select);
+    actions.appendChild(selectWrap);
     actions.appendChild(sendBtn);
     modal.appendChild(actions);
 

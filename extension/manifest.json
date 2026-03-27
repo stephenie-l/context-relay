@@ -13,6 +13,7 @@
     "https://claude.ai/*",
     "https://chat.openai.com/*",
     "https://chatgpt.com/*",
+    "https://gemini.google.com/*",
     "https://context-relay-production.up.railway.app/*"
   ],
   "background": {
@@ -20,7 +21,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://claude.ai/*", "https://chatgpt.com/*"],
+      "matches": ["https://claude.ai/*", "https://chatgpt.com/*", "https://gemini.google.com/*"],
       "js": ["content/capture.js"],
       "run_at": "document_idle"
     }
