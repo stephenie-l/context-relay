@@ -3,7 +3,7 @@
 > 
 Context Relay is a Chrome extension paired with a lightweight distillation API that packages the meaningful state of any AI conversation and hands it off seamlessly to any other model.
 
-[insert demo gif here]
+![Context Relay Demo](https://github.com/user-attachments/assets/8a8cdc05-5530-4e4e-b5a0-db23eb4cea07)
 
 > 
 ## Why this exists
